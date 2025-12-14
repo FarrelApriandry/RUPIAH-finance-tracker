@@ -52,7 +52,7 @@ lib/
 │   ├── auth/               # Authentication logic and UI
 │   ├── transactions/       # Transaction data layer, domain, and presentation
 │   └── wallets/            # Wallet management and dashboard UI
-└── main.dart               # Application entry point
+└── main.dart               # Application entry point```
 
 ## Getting Started
 Follow these instructions to set up the project locally.
