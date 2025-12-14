@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "120930194376",
+    "project_id": "rupiah-finance-tracker",
+    "storage_bucket": "rupiah-finance-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:120930194376:android:99adaf9fc5b5897333a6fd",
+        "android_client_info": {
+          "package_name": "com.example.rupiah"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqhOda5QEE8J6xdLhRw3fnuSdzkYIlVxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

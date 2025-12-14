@@ -1,0 +1,73 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Flutter/Dart/Pub
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Android
+android/gradle/wrapper/gradle-wrapper.properties
+android/*.iml
+android/.gradle
+android/app/src/main/assets/
+android/local.properties
+android/key.properties
+**/android/app/build.gradle.kts
+
+# iOS
+ios/*.mode1v3
+ios/*.mode2v3
+ios/*.moved-aside
+ios/*.pbuser
+ios/*.perspectivev3
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Pods/
+ios/.symlinks/
+
+# MacOS
+macos/Flutter/ephemeral/
+macos/Pods/
+
+# Web
+lib/generated_plugin_registrant.dart
+
+# Firebase
+firebase_options.dart
+# (Opsional: Kalau repo ini private, firebase_options.dart boleh dicommit. 
+# Tapi kalau public, mending diignore biar API Key gak terekspos)
+
+# Exceptions to above rules
+!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
