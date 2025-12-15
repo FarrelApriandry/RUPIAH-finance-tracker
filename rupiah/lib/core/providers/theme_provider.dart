@@ -10,7 +10,7 @@ class ThemeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     // Default state: Ikut sistem HP
-    return ThemeMode.system;
+    return ThemeMode.light;
   }
 
   // Fungsi untuk mengubah tema secara eksplisit
