@@ -8,7 +8,8 @@ import '../../transactions/presentation/transaction_controller.dart';
 import '../../transactions/presentation/transaction_history_screen.dart';
 import '../../transactions/presentation/widgets/transaction_item.dart';
 import '../../../core/utils/currency_formatter.dart';
-import '../../reports/presentation/reports_screen.dart'; // <--- IMPORT SCREEN BARU
+import '../../reports/presentation/reports_screen.dart';
+import '../../settings/presentation/settings_screen.dart';
 import 'wallet_controller.dart';
 import 'wallet_detail_screen.dart';
 import 'balance_provider.dart';
@@ -24,20 +25,16 @@ class DashboardScreen extends ConsumerWidget {
     final netWorth = ref.watch(netWorthProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Ikut Tema
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               "Dashboard",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
               "Hi, ${user?.displayName?.split(' ').first ?? 'User'}",
@@ -46,9 +43,8 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          // TOMBOL ANALISIS BARU DI SINI
           IconButton(
-            icon: const Icon(Icons.pie_chart_outline, color: Colors.black),
+            icon: const Icon(Icons.pie_chart_outline),
             tooltip: "Analisis Pengeluaran",
             onPressed: () {
               Navigator.push(
@@ -58,17 +54,24 @@ class DashboardScreen extends ConsumerWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.add_card, color: Colors.black),
+            icon: const Icon(Icons.add_card),
             tooltip: "Tambah Dompet",
             onPressed: () => _showAddWalletDialog(context, ref),
           ),
+          // GANTI LOGOUT JADI SETTINGS
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            onPressed: () =>
-                ref.read(authControllerProvider.notifier).signOut(),
+            icon: const Icon(Icons.settings),
+            tooltip: "Pengaturan",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
           ),
         ],
       ),
+      // ... (Sisa kode body ke bawah SAMA PERSIS, gak perlu diubah)
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           showModalBottomSheet(
@@ -82,7 +85,8 @@ class DashboardScreen extends ConsumerWidget {
         },
         label: const Text("Transaksi"),
         icon: const Icon(Icons.edit_note),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors
+            .black, // Bisa diganti Theme.of(context).primaryColor kalau mau ikut tema
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -96,7 +100,7 @@ class DashboardScreen extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.black, // Gaya modern dark
+                  color: Colors.black,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
@@ -168,7 +172,6 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigasi ke Halaman Full History
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -205,7 +208,7 @@ class DashboardScreen extends ConsumerWidget {
                 error: (e, _) => Text("Err: $e"),
               ),
 
-              const SizedBox(height: 80), // Padding bawah biar gak ketutup FAB
+              const SizedBox(height: 80),
             ],
           ),
         ),
@@ -214,19 +217,19 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   void _showAddWalletDialog(BuildContext context, WidgetRef ref) {
+    // ... (Kode Add Wallet Dialog SAMA PERSIS)
     final nameController = TextEditingController();
     final balanceController = TextEditingController();
-    int selectedColor = 0xFF2196F3; // Default Blue
+    int selectedColor = 0xFF2196F3;
 
-    // List warna yang bisa dipilih
     final List<int> colors = [
-      0xFF2196F3, // Blue
-      0xFF4CAF50, // Green
-      0xFFF44336, // Red
-      0xFFFFC107, // Amber
-      0xFF9C27B0, // Purple
-      0xFF607D8B, // Blue Grey
-      0xFF795548, // Brown
+      0xFF2196F3,
+      0xFF4CAF50,
+      0xFFF44336,
+      0xFFFFC107,
+      0xFF9C27B0,
+      0xFF607D8B,
+      0xFF795548,
     ];
 
     showModalBottomSheet(
@@ -261,8 +264,6 @@ class DashboardScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Input Nama
               TextField(
                 controller: nameController,
                 textCapitalization: TextCapitalization.sentences,
@@ -276,8 +277,6 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Input Saldo
               TextField(
                 controller: balanceController,
                 keyboardType: TextInputType.number,
@@ -292,8 +291,6 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Pilihan Warna
               const Text(
                 "Pilih Warna Kartu",
                 style: TextStyle(fontWeight: FontWeight.w600),
@@ -340,10 +337,7 @@ class DashboardScreen extends ConsumerWidget {
                   },
                 ),
               ),
-
               const SizedBox(height: 32),
-
-              // Tombol Simpan
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -352,7 +346,6 @@ class DashboardScreen extends ConsumerWidget {
                     final balance = CurrencyInputFormatter.parse(
                       balanceController.text,
                     );
-
                     if (name.isNotEmpty) {
                       ref
                           .read(walletControllerProvider.notifier)
@@ -397,8 +390,6 @@ class _WalletCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wallets = ref.watch(walletListProvider).value ?? [];
-
-    // Safety check kalau wallet baru dihapus tapi UI belum rebuild
     if (!wallets.any((w) => w.id == walletId)) return const SizedBox();
 
     final wallet = wallets.firstWhere((w) => w.id == walletId);
@@ -409,7 +400,6 @@ class _WalletCard extends ConsumerWidget {
       shadowColor: Color(wallet.color).withOpacity(0.4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        // <--- INTERAKSI CLICK DIMULAI DI SINI
         onTap: () {
           Navigator.push(
             context,
@@ -420,7 +410,7 @@ class _WalletCard extends ConsumerWidget {
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16), // Padding digedein dikit biar lega
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(

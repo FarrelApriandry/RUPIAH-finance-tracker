@@ -20,11 +20,10 @@ class FirestoreService {
   CollectionReference get _transactionsRef =>
       _firestore.collection('users').doc(_uid).collection('transactions');
 
-  // BARU: Collection Categories
   CollectionReference get _categoriesRef =>
       _firestore.collection('users').doc(_uid).collection('categories');
 
-  // --- WALLET METHODS ---
+  // --- EXISTING METHODS (Gak berubah) ---
   Future<void> addWallet(Map<String, dynamic> data) async =>
       await _walletsRef.add(data);
   Future<void> deleteWallet(String id) async =>
@@ -32,7 +31,6 @@ class FirestoreService {
   Stream<QuerySnapshot> getWallets() =>
       _walletsRef.orderBy('createdAt', descending: false).snapshots();
 
-  // --- TRANSACTION METHODS ---
   Future<void> addTransaction(Map<String, dynamic> data) async =>
       await _transactionsRef.add(data);
   Future<void> updateTransaction(String id, Map<String, dynamic> data) async =>
@@ -42,11 +40,25 @@ class FirestoreService {
   Stream<QuerySnapshot> getTransactions() =>
       _transactionsRef.orderBy('date', descending: true).snapshots();
 
-  // --- CATEGORY METHODS (BARU) ---
   Future<void> addCategory(Map<String, dynamic> data) async =>
       await _categoriesRef.add(data);
   Future<void> deleteCategory(String id) async =>
       await _categoriesRef.doc(id).delete();
   Stream<QuerySnapshot> getCategories() =>
       _categoriesRef.orderBy('name').snapshots();
+
+  // --- NEW: DANGEROUS ZONE ---
+  Future<void> deleteAllData() async {
+    // Hapus semua Transaksi
+    final trans = await _transactionsRef.get();
+    for (var doc in trans.docs) await doc.reference.delete();
+
+    // Hapus semua Wallet
+    final wallets = await _walletsRef.get();
+    for (var doc in wallets.docs) await doc.reference.delete();
+
+    // Hapus semua Kategori Custom
+    final cats = await _categoriesRef.get();
+    for (var doc in cats.docs) await doc.reference.delete();
+  }
 }

@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/wallets/presentation/dashboard_screen.dart';
+import 'core/providers/theme_provider.dart'; // Import Provider Tema
 
-// Provider untuk memantau status Auth user secara realtime
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 });
@@ -15,20 +15,30 @@ class FinanceApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Pantau authState
     final authState = ref.watch(authStateProvider);
+    // Watch Theme Provider
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(
       title: 'Finance Tracker',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.green),
-      // Logic Gate: Menentukan halaman mana yang muncul
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.green,
+        brightness: Brightness.light, // Tema Terang
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.green,
+        brightness: Brightness.dark, // Tema Gelap
+      ),
+      themeMode: themeMode, // <--- DINAMIS DARI SINI
       home: authState.when(
         data: (user) {
           if (user != null) {
-            return const DashboardScreen(); // User sudah login
+            return const DashboardScreen();
           } else {
-            return const LoginScreen(); // User belum login
+            return const LoginScreen();
           }
         },
         loading: () =>

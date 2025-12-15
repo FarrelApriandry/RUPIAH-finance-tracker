@@ -1,32 +1,20 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart'; // Import ini
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/auth_repository.dart';
-
-// 🚀 UPGRADE: Menggunakan AsyncNotifier (Riverpod 2.0 Style)
-// Ini pengganti StateNotifier yang lebih modern.
 
 final authControllerProvider = AsyncNotifierProvider<AuthController, void>(() {
   return AuthController();
 });
 
 class AuthController extends AsyncNotifier<void> {
-  // Method build() wajib ada di Riverpod 2.0 sebagai inisialisasi
   @override
-  FutureOr<void> build() {
-    // Return null artinya state awal adalah "Idle" (tidak loading, tidak error)
-    return null;
-  }
+  FutureOr<void> build() => null;
 
   Future<void> signInWithGoogle() async {
-    // 1. Set state jadi loading
     state = const AsyncValue.loading();
-
-    // 2. Jalankan logic login
-    // AsyncValue.guard otomatis menangkap Error kalau login gagal
     state = await AsyncValue.guard(() async {
-      final repo = ref.read(
-        authRepositoryProvider,
-      ); // Baca repo langsung di sini
+      final repo = ref.read(authRepositoryProvider);
       await repo.signInWithGoogle();
     });
   }
@@ -36,6 +24,21 @@ class AuthController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(() async {
       final repo = ref.read(authRepositoryProvider);
       await repo.signOut();
+    });
+  }
+
+  // BARU: Update Profile (Nama & Foto)
+  Future<void> updateProfile({String? displayName, String? photoURL}) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        if (displayName != null) await user.updateDisplayName(displayName);
+        if (photoURL != null) await user.updatePhotoURL(photoURL);
+
+        // Reload user biar UI update
+        await user.reload();
+      }
     });
   }
 }
