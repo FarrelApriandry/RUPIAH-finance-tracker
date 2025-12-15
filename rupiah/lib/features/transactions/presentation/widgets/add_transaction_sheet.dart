@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../wallets/presentation/wallet_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../domain/transaction_model.dart'; // Import Model
+import '../../domain/transaction_model.dart';
 import '../transaction_controller.dart';
+import '../../../categories/presentation/category_controller.dart';
+import '../../../categories/presentation/manage_category_screen.dart'; // Import Screen Manage
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
-  // Tambahkan parameter opsional ini
   final TransactionModel? transactionToEdit;
-
   const AddTransactionSheet({super.key, this.transactionToEdit});
 
   @override
@@ -20,35 +20,29 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
 class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   late TextEditingController _amountController;
   late TextEditingController _noteController;
-  late TextEditingController _customCategoryController;
 
   String? _selectedWalletId;
   bool _isExpense = true;
-  String _selectedCategory = 'Makan';
+  String _selectedCategory = 'Makan'; // Default awal
   late DateTime _selectedDate;
 
-  final List<String> _categories = [
+  // Kategori Bawaan (Static)
+  final List<String> _defaultCategories = [
     'Makan',
     'Transport',
     'Belanja',
     'Gaji',
-    'Lainnya',
   ];
 
   @override
   void initState() {
     super.initState();
-    // 1. CEK APAKAH INI MODE EDIT?
     final t = widget.transactionToEdit;
 
-    // Inisialisasi data awal
     _selectedDate = t?.date ?? DateTime.now();
     _selectedWalletId = t?.walletId;
 
-    // Kalau edit, ambil amountnya (pastiin jadi positif dulu buat ditampilin)
     double initialAmount = t != null ? t.amount.abs() : 0;
-
-    // Setup Controller dengan data awal (kalau ada)
     _amountController = TextEditingController(
       text: t != null
           ? NumberFormat.currency(
@@ -58,22 +52,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             ).format(initialAmount)
           : '',
     );
-
     _noteController = TextEditingController(text: t?.note ?? '');
 
-    // Logic Kategori & Type
     if (t != null) {
       _isExpense = t.amount < 0;
-
-      if (_categories.contains(t.category)) {
-        _selectedCategory = t.category;
-        _customCategoryController = TextEditingController();
-      } else {
-        _selectedCategory = 'Lainnya';
-        _customCategoryController = TextEditingController(text: t.category);
-      }
-    } else {
-      _customCategoryController = TextEditingController();
+      _selectedCategory = t.category;
     }
   }
 
@@ -81,13 +64,15 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
-    _customCategoryController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final walletListAsync = ref.watch(walletListProvider);
+    // AMBIL KATEGORI CUSTOM DARI FIRESTORE
+    final customCategoriesAsync = ref.watch(categoryListProvider);
+
     final isEditing = widget.transactionToEdit != null;
 
     return Padding(
@@ -120,14 +105,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             ),
             const SizedBox(height: 24),
 
-            // 1. Pilih Wallet
+            // 1. Pilih Wallet (Sama seperti sebelumnya)
             walletListAsync.when(
               data: (wallets) {
                 if (wallets.isEmpty) return const Text("Buat dompet dulu!");
-                // Kalau new transaction & belum pilih, pilih pertama
-                if (_selectedWalletId == null && wallets.isNotEmpty) {
+                if (_selectedWalletId == null && wallets.isNotEmpty)
                   _selectedWalletId = wallets.first.id;
-                }
 
                 return DropdownButtonFormField<String>(
                   value: _selectedWalletId,
@@ -140,9 +123,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                       Icons.account_balance_wallet_outlined,
                     ),
                   ),
-                  items: wallets.map((w) {
-                    return DropdownMenuItem(value: w.id, child: Text(w.name));
-                  }).toList(),
+                  items: wallets
+                      .map(
+                        (w) =>
+                            DropdownMenuItem(value: w.id, child: Text(w.name)),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => _selectedWalletId = val),
                 );
               },
@@ -153,65 +139,56 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             const SizedBox(height: 16),
 
             // 2. Jenis Transaksi
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _isExpense = true),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _isExpense ? Colors.red : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: _isExpense
-                              ? null
-                              : Border.all(color: Colors.grey, width: 2),
-                        ),
-                        child: Text(
-                          "Pengeluaran",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _isExpense ? Colors.white : Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isExpense = true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _isExpense ? Colors.red : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: _isExpense
+                            ? null
+                            : Border.all(color: Colors.grey),
+                      ),
+                      child: Text(
+                        "Pengeluaran",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: _isExpense ? Colors.white : Colors.grey,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _isExpense = false),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: !_isExpense
-                              ? Colors.green
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          border: !_isExpense
-                              ? null
-                              : Border.all(color: Colors.grey, width: 2),
-                        ),
-                        child: Text(
-                          "Pemasukan",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: !_isExpense ? Colors.white : Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isExpense = false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: !_isExpense ? Colors.green : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: !_isExpense
+                            ? null
+                            : Border.all(color: Colors.grey),
+                      ),
+                      child: Text(
+                        "Pemasukan",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: !_isExpense ? Colors.white : Colors.grey,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),
@@ -233,45 +210,65 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
             const SizedBox(height: 16),
 
-            // 4. Kategori
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: InputDecoration(
-                labelText: "Kategori",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: const Icon(Icons.category_outlined),
-              ),
-              items: _categories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (val) => setState(() {
-                _selectedCategory = val!;
-                if (_selectedCategory != 'Lainnya')
-                  _customCategoryController.clear();
-              }),
+            // 4. KATEGORI DINAMIS
+            customCategoriesAsync.when(
+              data: (customCats) {
+                // GABUNGKAN DEFAULT + CUSTOM
+                final List<String> allCategoryNames = [
+                  ..._defaultCategories,
+                  ...customCats.map((c) => c.name),
+                ];
+
+                // Pastikan kategori yang terpilih ada di list (kalau dihapus user, fallback ke default)
+                if (!allCategoryNames.contains(_selectedCategory)) {
+                  _selectedCategory = allCategoryNames.first;
+                }
+
+                return Column(
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      decoration: InputDecoration(
+                        labelText: "Kategori",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.category_outlined),
+                      ),
+                      items: allCategoryNames
+                          .map(
+                            (c) => DropdownMenuItem(value: c, child: Text(c)),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setState(() => _selectedCategory = val!),
+                    ),
+
+                    // Link ke Halaman Kelola Kategori
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ManageCategoryScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.settings, size: 16),
+                        label: const Text("Kelola Kategori"),
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => const Text("Error loading categories"),
             ),
 
-            if (_selectedCategory == 'Lainnya') ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: _customCategoryController,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  labelText: "Nama Kategori Lainnya",
-                  hintText: "Contoh: Parkir, Amal",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: const Icon(Icons.edit_outlined),
-                  filled: true,
-                  fillColor: Colors.yellow.shade50,
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
             // 5. Catatan
             TextField(
@@ -279,7 +276,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 labelText: "Catatan (Opsional)",
-                hintText: "Contoh: Makan siang bareng",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -314,44 +310,28 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   void _submit() async {
     if (_selectedWalletId == null || _amountController.text.isEmpty) return;
 
-    if (_selectedCategory == 'Lainnya' &&
-        _customCategoryController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Isi kategori lainnya!"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     final amount = CurrencyInputFormatter.parse(_amountController.text);
-    final finalCategory = _selectedCategory == 'Lainnya'
-        ? _customCategoryController.text.trim()
-        : _selectedCategory;
 
     if (widget.transactionToEdit != null) {
-      // MODE EDIT
       await ref
           .read(transactionControllerProvider.notifier)
           .editTransaction(
-            id: widget.transactionToEdit!.id, // ID Lama
+            id: widget.transactionToEdit!.id,
             walletId: _selectedWalletId!,
             amount: amount,
             isExpense: _isExpense,
-            category: finalCategory,
+            category: _selectedCategory,
             date: _selectedDate,
             note: _noteController.text,
           );
     } else {
-      // MODE ADD
       await ref
           .read(transactionControllerProvider.notifier)
           .addTransaction(
             walletId: _selectedWalletId!,
             amount: amount,
             isExpense: _isExpense,
-            category: finalCategory,
+            category: _selectedCategory,
             date: _selectedDate,
             note: _noteController.text,
           );
